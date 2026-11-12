@@ -193,7 +193,8 @@ workflow.onComplete {
     Results:   ${params.outdir}
     """
     
-    if (params.email) {
+    // Only send when --email looks like an address (null, empty or the text "null" send nothing)
+    if (params.email && params.email ==~ /\S+@\S+\.\S+/) {
         def status = workflow.success ? "SUCCESS" : "FAILED"
         def subject = "Long read pipeline status: ${status}"
         def body = """
