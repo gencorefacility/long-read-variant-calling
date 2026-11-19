@@ -124,6 +124,7 @@ PYCODE
 
     # Generate plots
     plot_num=0
+    : > plotted_regions.tsv
     while IFS=\$'\\t' read -r chrom start end pos svtype; do
         [ -z "\$chrom" ] && continue
 
@@ -139,6 +140,7 @@ PYCODE
             -t "\$svtype" \\
             -r "${reference}"; then
             echo "SUCCESS: Plot \$((plot_num + 1)) created"
+            printf '%s\\t%s\\t%s\\t%s\\n' "\$out" "\$chrom" "\$pos" "\$svtype" >> plotted_regions.tsv
             plot_num=\$((plot_num + 1))
         else
             echo "FAILED: Could not create plot for \$chrom:\$pos (\$svtype)"
@@ -150,16 +152,19 @@ PYCODE
     python3 << 'PYCODE2'
 import json
 import base64
-import glob
 
-regions = json.load(open('regions.json'))
-png_files = sorted(glob.glob('${prefix}.*.png'))
+# Only plots that were created successfully are listed here, so each picture keeps its own label
+plotted = []
+with open('plotted_regions.tsv') as f:
+    for row in f:
+        png_file, chrom, pos, svtype = row.rstrip("\\n").split("\\t")
+        plotted.append((png_file, {'chrom': chrom, 'pos': pos, 'svtype': svtype}))
 
 # Create HTML content with embedded images
 html_content = '<div style="max-width: 100%;">'
 html_content += '<h4>Samplot Visualizations</h4>'
 
-for png_file, region in zip(png_files, regions):
+for png_file, region in plotted:
     with open(png_file, 'rb') as f:
         img_data = base64.b64encode(f.read()).decode('utf-8')
     
@@ -175,7 +180,7 @@ html_content += '</div>'
 mqc_data = {
     "id": "samplot_${caller}",
     "section_name": "Samplot Visualizations - ${caller}",
-    "description": f"Visual inspection of {len(png_files)} structural variants for ${meta.id}",
+    "description": f"Visual inspection of {len(plotted)} structural variants for ${meta.id}",
     "plot_type": "html",
     "data": html_content
 }
