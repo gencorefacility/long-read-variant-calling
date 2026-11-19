@@ -44,7 +44,7 @@ workflow {
         .fromPath(params.input, checkIfExists: true)
         .map { fastq ->
             def meta = [
-                id: fastq.baseName,  // Sample ID from filename
+                id: fastq.name.replaceFirst(/\.(fastq|fq)(\.gz)?$/, ''),  // Sample ID from filename, without extension
             ]
             [ meta, fastq ]
         }
