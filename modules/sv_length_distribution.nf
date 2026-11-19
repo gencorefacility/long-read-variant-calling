@@ -1,5 +1,5 @@
 process SV_LENGTH_DISTRIBUTION {
-    tag "$meta.id_$caller"
+    tag "${meta.id}_${caller}"
     label 'process_single'
     
     conda 'python>=3.9 matplotlib>=3.5 seaborn>=0.12 pandas>=1.3 numpy>=1.20 pyyaml plotly'
